@@ -5,14 +5,17 @@ require_once __DIR__ . '/../../utils/Response.php';
 require_once __DIR__ . '/../../utils/Auth.php';
 require_once __DIR__ . '/../Models/Group.php';
 require_once __DIR__ . '/../Models/User.php';
+require_once __DIR__ . '/../Models/GroupInvite.php';
 
 class GroupController {
     private $groupModel;
     private $userModel;
+    private $inviteModel;
     
     public function __construct() {
         $this->groupModel = new Group();
         $this->userModel = new User();
+        $this->inviteModel = new GroupInvite();
     }
     
     public function index() {
@@ -192,6 +195,131 @@ class GroupController {
             Response::success(null, 'Group deleted successfully');
         } else {
             Response::error('Failed to delete group', 500);
+        }
+    }
+    
+    /**
+     * Generate an invite link for a group
+     */
+    public function createInvite($groupId) {
+        $userId = Auth::getUserIdFromToken();
+        if (!$userId) Response::unauthorized();
+        
+        // Check if user is a member of the group
+        if (!$this->groupModel->isMember($groupId, $userId)) {
+            Response::error('You are not a member of this group', 403);
+        }
+        
+        $data = json_decode(file_get_contents('php://input'), true);
+        
+        // Create invite with optional expiry and max uses
+        $inviteData = [
+            'group_id' => $groupId,
+            'created_by' => $userId,
+            'expires_at' => $data['expires_at'] ?? null,
+            'max_uses' => $data['max_uses'] ?? null
+        ];
+        
+        $invite = $this->inviteModel->create($inviteData);
+        
+        Response::success($invite, 'Invite link created successfully', 201);
+    }
+    
+    /**
+     * Get all active invites for a group
+     */
+    public function getInvites($groupId) {
+        $userId = Auth::getUserIdFromToken();
+        if (!$userId) Response::unauthorized();
+        
+        // Check if user is a member
+        if (!$this->groupModel->isMember($groupId, $userId)) {
+            Response::error('You are not a member of this group', 403);
+        }
+        
+        $invites = $this->inviteModel->findByGroupId($groupId);
+        
+        Response::success($invites);
+    }
+    
+    /**
+     * Validate an invite token
+     */
+    public function validateInvite($token) {
+        $validation = $this->inviteModel->validateToken($token);
+        
+        if (!$validation['valid']) {
+            Response::error($validation['reason'], 400);
+        }
+        
+        Response::success([
+            'valid' => true,
+            'group' => [
+                'id' => $validation['invite']['group_id'],
+                'name' => $validation['invite']['group_name']
+            ]
+        ]);
+    }
+    
+    /**
+     * Join a group via invite link
+     */
+    public function joinViaInvite($token) {
+        $userId = Auth::getUserIdFromToken();
+        if (!$userId) Response::unauthorized();
+        
+        // Validate token
+        $validation = $this->inviteModel->validateToken($token);
+        
+        if (!$validation['valid']) {
+            Response::error($validation['reason'], 400);
+        }
+        
+        $invite = $validation['invite'];
+        $groupId = $invite['group_id'];
+        
+        // Check if user is already a member
+        if ($this->groupModel->isMember($groupId, $userId)) {
+            Response::error('You are already a member of this group', 409);
+        }
+        
+        // Add user to group
+        $result = $this->groupModel->addMember($groupId, $userId);
+        
+        if ($result) {
+            // Increment usage count
+            $this->inviteModel->incrementUsage($token);
+            
+            // Get group details
+            $group = $this->groupModel->findById($groupId);
+            
+            Response::success([
+                'group' => $group,
+                'message' => 'Successfully joined the group'
+            ], 'Successfully joined the group', 200);
+        } else {
+            Response::error('Failed to join group', 500);
+        }
+    }
+    
+    /**
+     * Deactivate an invite link
+     */
+    public function deactivateInvite($groupId, $inviteId) {
+        $userId = Auth::getUserIdFromToken();
+        if (!$userId) Response::unauthorized();
+        
+        // Check if user is admin
+        if (!$this->groupModel->isAdmin($groupId, $userId)) {
+            Response::error('Only admins can deactivate invite links', 403);
+        }
+        
+        $result = $this->inviteModel->deactivate($inviteId);
+        
+        if ($result) {
+            Response::success(null, 'Invite link deactivated successfully');
+        } else {
+            Response::error('Failed to deactivate invite link', 500);
         }
     }
 }

@@ -97,6 +97,15 @@ function handleRequest($uri, $method) {
                 $controller->removeMember($id, $segments[3]);
             } elseif ($id && $action === 'add-member' && $method === 'POST') {
                 $controller->addMember($id);
+            } elseif ($id && $action === 'invites' && $method === 'GET') {
+                // GET /groups/:id/invites - Get all invites for a group
+                $controller->getInvites($id);
+            } elseif ($id && $action === 'invites' && $method === 'POST') {
+                // POST /groups/:id/invites - Create invite link
+                $controller->createInvite($id);
+            } elseif ($id && $action === 'invites' && $segments[3] && $method === 'DELETE') {
+                // DELETE /groups/:id/invites/:inviteId - Deactivate invite
+                $controller->deactivateInvite($id, $segments[3]);
             } elseif ($id && $method === 'DELETE') {
                 $controller->delete($id);
             } elseif ($id && $method === 'GET') {
@@ -107,6 +116,21 @@ function handleRequest($uri, $method) {
                 $controller->store();
             } else {
                 Response::notFound('Group endpoint not found');
+            }
+        }
+        
+        // Group invite routes (public access for validation and joining)
+        elseif ($resource === 'invites') {
+            $controller = new GroupController();
+            
+            if ($id && $action === 'join' && $method === 'POST') {
+                // POST /invites/:token/join - Join group via invite
+                $controller->joinViaInvite($id);
+            } elseif ($id && $method === 'GET') {
+                // GET /invites/:token - Validate invite token
+                $controller->validateInvite($id);
+            } else {
+                Response::notFound('Invite endpoint not found');
             }
         }
         
