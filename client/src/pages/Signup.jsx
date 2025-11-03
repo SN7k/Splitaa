@@ -28,6 +28,7 @@ function Signup() {
     
     try {
       await registerUser(name, email, password)
+      sessionStorage.removeItem('redirectAfterLogin')
       navigate('/home')
       window.location.reload()
     } catch (err) {

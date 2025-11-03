@@ -17,7 +17,7 @@ function Login() {
 
   useEffect(() => {
     if (userLoaded && isSignedIn && user) {
-      console.log('✅ User already signed in with Clerk, redirecting to home')
+      sessionStorage.removeItem('redirectAfterLogin')
       navigate('/home', { replace: true })
       return
     }
@@ -26,7 +26,7 @@ function Login() {
     const currentUser = localStorage.getItem('current_user')
     
     if (token && currentUser) {
-      console.log('✅ User already authenticated with backend, redirecting to home')
+      sessionStorage.removeItem('redirectAfterLogin')
       navigate('/home', { replace: true })
     }
   }, [userLoaded, isSignedIn, user, navigate])
@@ -38,6 +38,7 @@ function Login() {
     
     try {
       await loginUser(email, password)
+      sessionStorage.removeItem('redirectAfterLogin')
       navigate('/home')
       window.location.reload()
     } catch (err) {
@@ -64,7 +65,6 @@ function Login() {
       setLoading(true)
       
       if (isSignedIn && user) {
-        console.log('✅ Already signed in with Clerk, redirecting...')
         navigate('/home', { replace: true })
         return
       }

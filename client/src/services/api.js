@@ -168,6 +168,34 @@ export const removeGroupMember = async (groupId, userId) => {
   });
 };
 
+// ===== Group Invites =====
+export const createGroupInvite = async (groupId, options = {}) => {
+  return await apiRequest(`/groups/${groupId}/invites`, {
+    method: 'POST',
+    body: JSON.stringify(options),
+  });
+};
+
+export const getGroupInvites = async (groupId) => {
+  return await apiRequest(`/groups/${groupId}/invites`);
+};
+
+export const validateInvite = async (token) => {
+  return await apiRequest(`/invites/${token}`);
+};
+
+export const joinViaInvite = async (token) => {
+  return await apiRequest(`/invites/${token}/join`, {
+    method: 'POST',
+  });
+};
+
+export const deactivateInvite = async (groupId, inviteId) => {
+  return await apiRequest(`/groups/${groupId}/invites/${inviteId}`, {
+    method: 'DELETE',
+  });
+};
+
 // ===== Settlements =====
 export const getSettlements = async () => await apiRequest('/settlements');
 
@@ -247,6 +275,11 @@ export default {
   getGroupMembers,
   addGroupMemberByEmail,
   removeGroupMember,
+  createGroupInvite,
+  getGroupInvites,
+  validateInvite,
+  joinViaInvite,
+  deactivateInvite,
   getSettlements,
   createSettlement,
   calculateBalances,

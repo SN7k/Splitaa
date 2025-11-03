@@ -14,7 +14,8 @@ import {
   createExpense,
   updateExpense,
   deleteExpense,
-  getGroup
+  getGroup,
+  createGroupInvite
 } from '../services/api'
 
 function GroupDetails() {
@@ -36,6 +37,11 @@ function GroupDetails() {
   const [showAddMemberModal, setShowAddMemberModal] = useState(false)
   const [newMemberEmail, setNewMemberEmail] = useState('')
   const [addMemberError, setAddMemberError] = useState('')
+  
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [inviteLink, setInviteLink] = useState('')
+  const [generatingLink, setGeneratingLink] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
   
   const [showExpenseModal, setShowExpenseModal] = useState(false)
   const [editingExpense, setEditingExpense] = useState(null)
@@ -420,6 +426,65 @@ function GroupDetails() {
 
   const getMemberById = (userId) => {
     return groupMembers.find(m => (m.user_id || m.id) === parseInt(userId))
+  }
+
+  const handleGenerateInviteLink = async () => {
+    try {
+      setGeneratingLink(true)
+      setLinkCopied(false)
+      
+      // Create invite link (optional: set expiry or max uses)
+      const response = await createGroupInvite(groupIdFromUrl, {
+        // expires_at: null, // Optional: set expiry date
+        // max_uses: null // Optional: set max number of uses
+      })
+      
+      const inviteData = response?.data || response
+      const token = inviteData.token
+      
+      // Generate full invite URL
+      const baseUrl = window.location.origin
+      const inviteUrl = `${baseUrl}/join/${token}`
+      
+      setInviteLink(inviteUrl)
+      setShowShareModal(true)
+    } catch (error) {
+      console.error('Error generating invite link:', error)
+      alert('Failed to generate invite link')
+    } finally {
+      setGeneratingLink(false)
+    }
+  }
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(inviteLink)
+      .then(() => {
+        setLinkCopied(true)
+        setTimeout(() => setLinkCopied(false), 3000)
+      })
+      .catch(err => {
+        console.error('Failed to copy link:', err)
+        alert('Failed to copy link')
+      })
+  }
+
+  const handleShareLink = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Join ${selectedGroup.name}`,
+          text: `You've been invited to join "${selectedGroup.name}" group!`,
+          url: inviteLink
+        })
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error('Error sharing:', error)
+        }
+      }
+    } else {
+      // Fallback to copy
+      handleCopyLink()
+    }
   }
 
   // Check if current user is admin/host
@@ -878,6 +943,8 @@ function GroupDetails() {
                 <Button
                   size="lg"
                   variant="light"
+                  onClick={handleGenerateInviteLink}
+                  disabled={generatingLink}
                   style={{
                     borderRadius: '12px',
                     fontWeight: '600',
@@ -886,8 +953,8 @@ function GroupDetails() {
                     border: `1px solid ${colors.border.primary}`
                   }}
                 >
-                  <i className="bi bi-share me-2"></i>
-                  Share event invitation
+                  <i className={`bi ${generatingLink ? 'bi-hourglass-split' : 'bi-share'} me-2`}></i>
+                  {generatingLink ? 'Generating link...' : 'Share event invitation'}
                 </Button>
               </div>
             </div>
@@ -1301,6 +1368,90 @@ function GroupDetails() {
           >
             <i className="bi bi-check-circle me-2"></i>
             {editingExpense ? 'Update Expense' : 'Add Expense'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Share Invite Link Modal */}
+      <Modal show={showShareModal} onHide={() => setShowShareModal(false)} centered>
+        <Modal.Header closeButton style={{ backgroundColor: colors.bg.card, borderBottom: `1px solid ${colors.border.primary}` }}>
+          <Modal.Title style={{ color: colors.text.primary }}>
+            <i className="bi bi-share me-2"></i>
+            Share Invite Link
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ backgroundColor: colors.bg.card }}>
+          <div style={{ marginBottom: '1rem' }}>
+            <h6 style={{ color: colors.text.primary, fontWeight: '600', marginBottom: '0.5rem' }}>
+              Invite people to join {selectedGroup?.name}
+            </h6>
+            <p style={{ color: colors.text.secondary, fontSize: '0.9rem', marginBottom: 0 }}>
+              Share this link with anyone you want to add to the group. They'll be able to join automatically.
+            </p>
+          </div>
+
+          <div style={{
+            backgroundColor: colors.bg.tertiary,
+            padding: '1rem',
+            borderRadius: '8px',
+            border: `1px solid ${colors.border.primary}`,
+            marginBottom: '1rem'
+          }}>
+            <div style={{
+              fontSize: '0.85rem',
+              color: colors.text.primary,
+              wordBreak: 'break-all',
+              marginBottom: '0.75rem',
+              fontFamily: 'monospace'
+            }}>
+              {inviteLink}
+            </div>
+            
+            <div className="d-flex gap-2">
+              <Button
+                variant={linkCopied ? 'success' : 'primary'}
+                onClick={handleCopyLink}
+                className="flex-grow-1"
+                style={{
+                  borderRadius: '8px',
+                  fontWeight: '600',
+                  padding: '0.75rem'
+                }}
+              >
+                <i className={`bi ${linkCopied ? 'bi-check-circle' : 'bi-clipboard'} me-2`}></i>
+                {linkCopied ? 'Copied!' : 'Copy Link'}
+              </Button>
+              
+              {navigator.share && (
+                <Button
+                  variant="outline-primary"
+                  onClick={handleShareLink}
+                  style={{
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    padding: '0.75rem'
+                  }}
+                >
+                  <i className="bi bi-share"></i>
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <Alert variant="info" style={{ 
+            backgroundColor: '#DBEAFE', 
+            border: '1px solid #3B82F6',
+            marginBottom: 0
+          }}>
+            <small style={{ color: '#1E40AF' }}>
+              <i className="bi bi-info-circle me-2"></i>
+              This link never expires and can be used by anyone. You can deactivate it anytime from group settings.
+            </small>
+          </Alert>
+        </Modal.Body>
+        <Modal.Footer style={{ backgroundColor: colors.bg.card, borderTop: `1px solid ${colors.border.primary}` }}>
+          <Button variant="secondary" onClick={() => setShowShareModal(false)}>
+            Close
           </Button>
         </Modal.Footer>
       </Modal>
