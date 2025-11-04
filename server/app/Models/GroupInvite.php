@@ -96,7 +96,7 @@ class GroupInvite {
      */
     public function incrementUsage($token) {
         $sql = "UPDATE group_invites 
-                SET current_uses = current_uses + 1, updated_at = NOW()
+                SET current_uses = current_uses + 1
                 WHERE token = ?";
         
         return $this->db->execute($sql, [$token]);
@@ -107,7 +107,7 @@ class GroupInvite {
      */
     public function deactivate($id) {
         $sql = "UPDATE group_invites 
-                SET is_active = 0, updated_at = NOW()
+                SET is_active = 0
                 WHERE id = ?";
         
         return $this->db->execute($sql, [$id]);
