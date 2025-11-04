@@ -1,9 +1,17 @@
 <?php
 // Database configuration
-// Check if running on App Engine (production)
+// Check environment
 $isProduction = isset($_SERVER['GAE_APPLICATION']) || getenv('DB_HOST');
+$isInfinityFree = !$isProduction && isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'infinityfreeapp.com') !== false;
 
-if ($isProduction) {
+if ($isInfinityFree) {
+    // InfinityFree hosting
+    define('DB_HOST', 'sql100.infinityfree.com');
+    define('DB_NAME', 'if0_40328792_splitaa');
+    define('DB_USER', 'if0_40328792');
+    define('DB_PASS', 'lSrNqg58Ij37');
+    define('JWT_SECRET', 'change-this-secret-key-in-production-12345');
+} elseif ($isProduction) {
     // Production (App Engine with Cloud SQL)
     define('DB_HOST', getenv('DB_HOST') ?: '/cloudsql/splitaa:asia-south1:splitaa-db');
     define('DB_NAME', getenv('DB_NAME') ?: 'splitaa_database');
