@@ -26,13 +26,13 @@ RUN echo '<Directory /var/www/html/public>\n\
     Require all granted\n\
 </Directory>' >> /etc/apache2/apache2.conf
 
-# Expose port 8080 (Cloud Run requirement)
-ENV PORT 8080
-RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
+# Expose port for Render (uses PORT environment variable)
+ENV PORT 10000
+EXPOSE ${PORT}
 
-# Expose port 8080 (Cloud Run requirement)
-ENV PORT 8080
-RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
+# Update Apache to use PORT from environment
+RUN sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf
+RUN sed -i 's/:80/:${PORT}/g' /etc/apache2/sites-available/000-default.conf
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html \
