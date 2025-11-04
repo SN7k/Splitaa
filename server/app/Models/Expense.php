@@ -11,10 +11,9 @@ class Expense {
     
     public function findById($id) {
         $expense = $this->db->fetchOne(
-            "SELECT e.*, u.name as paid_by_name, c.name as category_name, g.name as group_name
+            "SELECT e.*, u.name as paid_by_name, e.category as category_name, g.name as group_name
             FROM expenses e
             LEFT JOIN users u ON e.paid_by = u.id
-            LEFT JOIN categories c ON e.category_id = c.id
             LEFT JOIN `groups` g ON e.group_id = g.id
             WHERE e.id = ?",
             [$id]
@@ -31,15 +30,14 @@ class Expense {
         $expenses = $this->db->fetchAll("
             SELECT DISTINCT e.*, 
                 u.name as paid_by_name,
-                c.name as category_name,
+                e.category as category_name,
                 g.name as group_name
             FROM expenses e
             LEFT JOIN users u ON e.paid_by = u.id
-            LEFT JOIN categories c ON e.category_id = c.id
             LEFT JOIN `groups` g ON e.group_id = g.id
             LEFT JOIN expense_splits es ON e.id = es.expense_id
             WHERE e.paid_by = ? OR es.user_id = ?
-            ORDER BY e.date DESC, e.created_at DESC
+            ORDER BY e.created_at DESC
         ", [$userId, $userId]);
         
         foreach ($expenses as &$expense) {
@@ -51,12 +49,11 @@ class Expense {
     
     public function findByGroup($groupId) {
         $expenses = $this->db->fetchAll(
-            "SELECT e.*, u.name as paid_by_name, c.name as category_name
+            "SELECT e.*, u.name as paid_by_name, e.category as category_name
             FROM expenses e
             LEFT JOIN users u ON e.paid_by = u.id
-            LEFT JOIN categories c ON e.category_id = c.id
             WHERE e.group_id = ?
-            ORDER BY e.date DESC",
+            ORDER BY e.created_at DESC",
             [$groupId]
         );
         
@@ -69,17 +66,15 @@ class Expense {
     
     public function create($data) {
         $this->db->execute(
-            "INSERT INTO expenses (description, amount, paid_by, category_id, category, split_type, group_id, date, notes, receipt) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO expenses (description, amount, paid_by, category, split_type, group_id, notes, receipt_image) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 $data['description'],
                 $data['amount'],
                 $data['paid_by'],
-                $data['category_id'] ?? null,
                 $data['category'] ?? 'other',
                 $data['split_type'] ?? 'equal',
                 $data['group_id'] ?? null,
-                $data['date'] ?? date('Y-m-d'),
                 $data['notes'] ?? null,
                 $data['receipt'] ?? null
             ]
@@ -101,7 +96,7 @@ class Expense {
         $fields = [];
         $values = [];
         
-        $allowedFields = ['description', 'amount', 'paid_by', 'category_id', 'category', 'split_type', 'group_id', 'date', 'notes', 'receipt'];
+        $allowedFields = ['description', 'amount', 'paid_by', 'category', 'split_type', 'group_id', 'notes', 'receipt_image'];
         
         foreach ($data as $key => $value) {
             if (in_array($key, $allowedFields)) {
