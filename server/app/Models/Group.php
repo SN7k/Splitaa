@@ -159,12 +159,11 @@ class Group {
     
     public function getExpenses($groupId) {
         $expenses = $this->db->fetchAll(
-            "SELECT e.*, u.name as paid_by_name, c.name as category_name
+            "SELECT e.*, u.name as paid_by_name, e.category as category_name
             FROM expenses e
             LEFT JOIN users u ON e.paid_by = u.id
-            LEFT JOIN categories c ON e.category_id = c.id
             WHERE e.group_id = ?
-            ORDER BY e.date DESC, e.created_at DESC",
+            ORDER BY e.created_at DESC",
             [$groupId]
         );
         
