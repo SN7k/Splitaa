@@ -66,7 +66,7 @@ class Expense {
     
     public function create($data) {
         $this->db->execute(
-            "INSERT INTO expenses (description, amount, paid_by, category, split_type, group_id, notes, receipt_image) 
+            "INSERT INTO expenses (description, amount, paid_by, category, split_type, group_id, notes, receipt) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 $data['description'],
@@ -96,7 +96,7 @@ class Expense {
         $fields = [];
         $values = [];
         
-        $allowedFields = ['description', 'amount', 'paid_by', 'category', 'split_type', 'group_id', 'notes', 'receipt_image'];
+        $allowedFields = ['description', 'amount', 'paid_by', 'category', 'split_type', 'group_id', 'notes', 'receipt'];
         
         foreach ($data as $key => $value) {
             if (in_array($key, $allowedFields)) {
