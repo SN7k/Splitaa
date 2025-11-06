@@ -320,11 +320,7 @@ function Payment() {
   const handlePaymentMethodKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault()
-      const isValid = methodForm.type === 'upi' 
-        ? methodForm.upiId 
-        : (methodForm.bankName && methodForm.accountNumber && methodForm.ifsc)
-      
-      if (isValid) {
+      if (methodForm.upiId) {
         handleAddPaymentMethod()
       }
     }
@@ -359,12 +355,33 @@ function Payment() {
           ...debt,
           creditorPaymentMethods: data
         })
+        
+        // Check if there's a UPI payment method
+        const upiMethod = data.find(method => method.type === 'upi')
+        if (upiMethod && upiMethod.upi_id) {
+          // Directly open UPI app with payment details
+          handlePayViaUPI(upiMethod.upi_id, debt.amount, debt.creditor.name)
+          return
+        }
       }
     } catch (error) {
       console.error('Error loading creditor payment methods:', error)
     }
     
     setShowPaymentModal(true)
+  }
+
+  const handlePayViaUPI = (upiId, amount, payeeName) => {
+    // UPI Deep Link Format: upi://pay?pa=UPI_ID&pn=NAME&am=AMOUNT&cu=INR&tn=NOTE
+    const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=${encodeURIComponent('Payment via Splitaa')}`
+    
+    // Open UPI app
+    window.location.href = upiUrl
+    
+    // Show success message after a brief delay
+    setTimeout(() => {
+      alert('UPI payment initiated! Please complete the payment in your UPI app.')
+    }, 500)
   }
 
   const handleRecordPayment = () => {
@@ -546,19 +563,21 @@ function Payment() {
               <i className="bi bi-wallet2 me-2"></i>
               Payment Methods
             </h5>
-            <Button
-              size="sm"
-              style={{
-                backgroundColor: colors.brand.primary,
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: '600'
-              }}
-              onClick={() => setShowAddMethodModal(true)}
-            >
-              <i className="bi bi-plus-lg me-1"></i>
-              Add Method
-            </Button>
+            {paymentMethods.length > 0 && (
+              <Button
+                size="sm"
+                style={{
+                  backgroundColor: colors.brand.primary,
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: '600'
+                }}
+                onClick={() => setShowAddMethodModal(true)}
+              >
+                <i className="bi bi-plus-lg me-1"></i>
+                Add Method
+              </Button>
+            )}
           </div>
 
           {paymentMethods.length === 0 ? (
@@ -576,7 +595,7 @@ function Payment() {
                 }}></i>
                 <h6 style={{ color: colors.text.primary }}>No payment methods added</h6>
                 <p style={{ color: colors.text.secondary, marginBottom: '1rem', fontSize: '0.9rem' }}>
-                  Add your UPI ID or bank account to receive payments
+                  Add your UPI ID to receive payments
                 </p>
                 <Button
                   size="sm"
@@ -648,111 +667,28 @@ function Payment() {
       <Modal show={showAddMethodModal} onHide={() => setShowAddMethodModal(false)} centered>
         <Modal.Header closeButton style={{ backgroundColor: colors.bg.card, borderBottom: `1px solid ${colors.border.primary}` }}>
           <Modal.Title style={{ color: colors.text.primary }}>
-            <i className="bi bi-wallet2 me-2"></i>
-            Add Payment Method
+            <i className="bi bi-phone me-2"></i>
+            Add UPI
           </Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ backgroundColor: colors.bg.card }}>
           <Form>
             <Form.Group className="mb-3">
-              <Form.Label style={{ color: colors.text.primary, fontWeight: '600' }}>Type</Form.Label>
-              <div className="d-flex gap-2">
-                <Button
-                  variant={methodForm.type === 'upi' ? 'primary' : 'outline-secondary'}
-                  className="flex-grow-1"
-                  onClick={() => setMethodForm({...methodForm, type: 'upi'})}
-                  style={{
-                    backgroundColor: methodForm.type === 'upi' ? colors.brand.primary : 'transparent',
-                    borderColor: methodForm.type === 'upi' ? colors.brand.primary : colors.border.primary,
-                    color: methodForm.type === 'upi' ? '#FFFFFF' : colors.text.primary
-                  }}
-                >
-                  <i className="bi bi-phone me-2"></i>
-                  UPI
-                </Button>
-                <Button
-                  variant={methodForm.type === 'bank' ? 'primary' : 'outline-secondary'}
-                  className="flex-grow-1"
-                  onClick={() => setMethodForm({...methodForm, type: 'bank'})}
-                  style={{
-                    backgroundColor: methodForm.type === 'bank' ? colors.brand.primary : 'transparent',
-                    borderColor: methodForm.type === 'bank' ? colors.brand.primary : colors.border.primary,
-                    color: methodForm.type === 'bank' ? '#FFFFFF' : colors.text.primary
-                  }}
-                >
-                  <i className="bi bi-bank me-2"></i>
-                  Bank
-                </Button>
-              </div>
+              <Form.Label style={{ color: colors.text.primary, fontWeight: '600' }}>UPI ID</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="yourname@paytm or 9876543210@ybl"
+                value={methodForm.upiId}
+                onChange={(e) => setMethodForm({...methodForm, upiId: e.target.value})}
+                onKeyDown={handlePaymentMethodKeyDown}
+                autoFocus
+                style={{
+                  backgroundColor: colors.bg.tertiary,
+                  border: `1px solid ${colors.border.primary}`,
+                  color: colors.text.primary
+                }}
+              />
             </Form.Group>
-
-            {methodForm.type === 'upi' ? (
-              <Form.Group className="mb-3">
-                <Form.Label style={{ color: colors.text.primary, fontWeight: '600' }}>UPI ID</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="yourname@upi"
-                  value={methodForm.upiId}
-                  onChange={(e) => setMethodForm({...methodForm, upiId: e.target.value})}
-                  onKeyDown={handlePaymentMethodKeyDown}
-                  autoFocus
-                  style={{
-                    backgroundColor: colors.bg.tertiary,
-                    border: `1px solid ${colors.border.primary}`,
-                    color: colors.text.primary
-                  }}
-                />
-              </Form.Group>
-            ) : (
-              <>
-                <Form.Group className="mb-3">
-                  <Form.Label style={{ color: colors.text.primary, fontWeight: '600' }}>Bank Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="e.g., State Bank of India"
-                    value={methodForm.bankName}
-                    onChange={(e) => setMethodForm({...methodForm, bankName: e.target.value})}
-                    onKeyDown={handlePaymentMethodKeyDown}
-                    autoFocus
-                    style={{
-                      backgroundColor: colors.bg.tertiary,
-                      border: `1px solid ${colors.border.primary}`,
-                      color: colors.text.primary
-                    }}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label style={{ color: colors.text.primary, fontWeight: '600' }}>Account Number</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Enter account number"
-                    value={methodForm.accountNumber}
-                    onChange={(e) => setMethodForm({...methodForm, accountNumber: e.target.value})}
-                    onKeyDown={handlePaymentMethodKeyDown}
-                    style={{
-                      backgroundColor: colors.bg.tertiary,
-                      border: `1px solid ${colors.border.primary}`,
-                      color: colors.text.primary
-                    }}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label style={{ color: colors.text.primary, fontWeight: '600' }}>IFSC Code</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="e.g., SBIN0001234"
-                    value={methodForm.ifsc}
-                    onChange={(e) => setMethodForm({...methodForm, ifsc: e.target.value})}
-                    onKeyDown={handlePaymentMethodKeyDown}
-                    style={{
-                      backgroundColor: colors.bg.tertiary,
-                      border: `1px solid ${colors.border.primary}`,
-                      color: colors.text.primary
-                    }}
-                  />
-                </Form.Group>
-              </>
-            )}
           </Form>
         </Modal.Body>
         <Modal.Footer style={{ backgroundColor: colors.bg.card, borderTop: `1px solid ${colors.border.primary}` }}>
@@ -765,10 +701,10 @@ function Payment() {
               border: 'none'
             }}
             onClick={handleAddPaymentMethod}
-            disabled={methodForm.type === 'upi' ? !methodForm.upiId : (!methodForm.bankName || !methodForm.accountNumber || !methodForm.ifsc)}
+            disabled={!methodForm.upiId}
           >
             <i className="bi bi-check-circle me-2"></i>
-            Add Method
+            Add UPI
           </Button>
         </Modal.Footer>
       </Modal>
@@ -802,17 +738,43 @@ function Payment() {
                     </h6>
                     {selectedDebt.creditorPaymentMethods.map((method, index) => (
                       <div key={index} style={{ 
-                        padding: '0.5rem', 
+                        padding: '0.75rem', 
                         marginBottom: index < selectedDebt.creditorPaymentMethods.length - 1 ? '0.5rem' : 0,
                         backgroundColor: colors.bg.card,
                         borderRadius: '8px',
                         border: `1px solid ${colors.border.primary}`
                       }}>
-                        <div style={{ fontWeight: '600', color: colors.text.primary, fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-                          {method.type === 'upi' ? '📱 UPI' : '🏦 Bank Account'}
-                        </div>
-                        <div style={{ fontSize: '0.85rem', color: colors.text.secondary, fontFamily: 'monospace' }}>
-                          {method.type === 'upi' ? method.upi_id : `${method.bank_name} - ${method.account_number} (IFSC: ${method.ifsc_code})`}
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div className="flex-grow-1">
+                            <div style={{ fontWeight: '600', color: colors.text.primary, fontSize: '0.9rem', marginBottom: '0.25rem' }}>
+                              {method.type === 'upi' ? '📱 UPI' : '🏦 Bank Account'}
+                            </div>
+                            <div style={{ fontSize: '0.85rem', color: colors.text.secondary, fontFamily: 'monospace' }}>
+                              {method.type === 'upi' ? method.upi_id : `${method.bank_name} - ${method.account_number} (IFSC: ${method.ifsc_code})`}
+                            </div>
+                          </div>
+                          {method.type === 'upi' && (
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setShowPaymentModal(false)
+                                handlePayViaUPI(method.upi_id, selectedDebt.amount, selectedDebt.creditor.name)
+                              }}
+                              style={{
+                                backgroundColor: '#22C55E',
+                                border: 'none',
+                                borderRadius: '8px',
+                                padding: '0.5rem 1rem',
+                                fontSize: '0.8rem',
+                                fontWeight: '600',
+                                whiteSpace: 'nowrap',
+                                marginLeft: '0.5rem'
+                              }}
+                            >
+                              <i className="bi bi-phone me-1"></i>
+                              Pay Now
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))}

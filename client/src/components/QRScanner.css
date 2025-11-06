@@ -1,0 +1,235 @@
+/* Full screen semi-transparent overlay */
+.qr-scanner-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.qr-scanner-wrapper {
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Close button */
+.qr-close-btn {
+  position: absolute;
+  top: -60px;
+  right: 0;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: #FFFFFF;
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.qr-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* Error toast */
+.qr-error-toast {
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #EF4444;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  animation: slideDown 0.3s ease;
+  z-index: 10;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Camera container */
+.qr-camera-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 24px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.qr-camera-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Scan overlay with corners */
+.qr-scan-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70%;
+  height: 70%;
+  pointer-events: none;
+}
+
+/* Corner brackets */
+.qr-corner {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border: 4px solid #22C55E;
+}
+
+.qr-corner-tl {
+  top: 0;
+  left: 0;
+  border-right: none;
+  border-bottom: none;
+  border-top-left-radius: 12px;
+}
+
+.qr-corner-tr {
+  top: 0;
+  right: 0;
+  border-left: none;
+  border-bottom: none;
+  border-top-right-radius: 12px;
+}
+
+.qr-corner-bl {
+  bottom: 0;
+  left: 0;
+  border-right: none;
+  border-top: none;
+  border-bottom-left-radius: 12px;
+}
+
+.qr-corner-br {
+  bottom: 0;
+  right: 0;
+  border-left: none;
+  border-top: none;
+  border-bottom-right-radius: 12px;
+}
+
+/* Animated scan line */
+.qr-scan-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(to right, transparent, #22C55E, transparent);
+  animation: scan 2s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.8);
+}
+
+@keyframes scan {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(calc(70vw * 0.7));
+  }
+}
+
+/* Instruction text */
+.qr-instruction {
+  color: #FFFFFF;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  text-align: center;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .qr-scanner-overlay {
+    padding: 0;
+  }
+
+  .qr-scanner-wrapper {
+    max-width: 100%;
+    height: 100vh;
+    justify-content: center;
+  }
+
+  .qr-camera-container {
+    width: 90%;
+    max-width: 400px;
+  }
+
+  .qr-close-btn {
+    top: 40px;
+    right: 20px;
+  }
+
+  .qr-error-toast {
+    top: 100px;
+    left: 20px;
+    right: 20px;
+    transform: none;
+  }
+
+  @keyframes scan {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(calc(90vw * 0.7));
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .qr-camera-container {
+    width: 85%;
+  }
+
+  .qr-corner {
+    width: 40px;
+    height: 40px;
+  }
+
+  .qr-instruction {
+    font-size: 1rem;
+    margin-top: 1.5rem;
+  }
+}

@@ -1,6 +1,7 @@
 import { Container, Card, Button, Modal, Form, Alert, Badge, ListGroup, Nav } from 'react-bootstrap'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import QRCode from 'qrcode'
 import DesktopNavbar from '../components/Navbar'
 import BottomNavigation from '../components/BottomNavigation'
 import { useTheme } from '../contexts/ThemeContext'
@@ -40,8 +41,10 @@ function GroupDetails() {
   
   const [showShareModal, setShowShareModal] = useState(false)
   const [inviteLink, setInviteLink] = useState('')
+  const [qrCodeUrl, setQrCodeUrl] = useState('')
   const [generatingLink, setGeneratingLink] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
+  const qrCanvasRef = useRef(null)
   
   const [showExpenseModal, setShowExpenseModal] = useState(false)
   const [editingExpense, setEditingExpense] = useState(null)
@@ -444,9 +447,25 @@ function GroupDetails() {
       
       // Generate full invite URL
       const baseUrl = window.location.origin
-      const inviteUrl = `${baseUrl}/join/${token}`
+      const inviteUrl = `${baseUrl}/invite/${token}`
       
       setInviteLink(inviteUrl)
+      
+      // Generate QR code
+      try {
+        const qrDataUrl = await QRCode.toDataURL(inviteUrl, {
+          width: 300,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        })
+        setQrCodeUrl(qrDataUrl)
+      } catch (qrError) {
+        console.error('Error generating QR code:', qrError)
+      }
+      
       setShowShareModal(true)
     } catch (error) {
       console.error('Error generating invite link:', error)
@@ -1376,26 +1395,32 @@ function GroupDetails() {
       <Modal show={showShareModal} onHide={() => setShowShareModal(false)} centered>
         <Modal.Header closeButton style={{ backgroundColor: colors.bg.card, borderBottom: `1px solid ${colors.border.primary}` }}>
           <Modal.Title style={{ color: colors.text.primary }}>
-            <i className="bi bi-share me-2"></i>
-            Share Invite Link
+            <i className="bi bi-qr-code me-2"></i>
+            Share Invite
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ backgroundColor: colors.bg.card }}>
-          <div style={{ marginBottom: '1rem' }}>
-            <h6 style={{ color: colors.text.primary, fontWeight: '600', marginBottom: '0.5rem' }}>
-              Invite people to join {selectedGroup?.name}
-            </h6>
-            <p style={{ color: colors.text.secondary, fontSize: '0.9rem', marginBottom: 0 }}>
-              Share this link with anyone you want to add to the group. They'll be able to join automatically.
-            </p>
-          </div>
+        <Modal.Body style={{ backgroundColor: colors.bg.card, padding: '2rem' }}>
+          {/* QR Code */}
+          {qrCodeUrl && (
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <div style={{
+                backgroundColor: '#FFFFFF',
+                padding: '1rem',
+                borderRadius: '12px',
+                display: 'inline-block',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+              }}>
+                <img src={qrCodeUrl} alt="QR Code" style={{ width: '200px', height: '200px', display: 'block' }} />
+              </div>
+            </div>
+          )}
 
+          {/* Link Section */}
           <div style={{
             backgroundColor: colors.bg.tertiary,
             padding: '1rem',
             borderRadius: '8px',
-            border: `1px solid ${colors.border.primary}`,
-            marginBottom: '1rem'
+            border: `1px solid ${colors.border.primary}`
           }}>
             <div style={{
               fontSize: '0.85rem',
@@ -1437,23 +1462,7 @@ function GroupDetails() {
               )}
             </div>
           </div>
-
-          <Alert variant="info" style={{ 
-            backgroundColor: '#DBEAFE', 
-            border: '1px solid #3B82F6',
-            marginBottom: 0
-          }}>
-            <small style={{ color: '#1E40AF' }}>
-              <i className="bi bi-info-circle me-2"></i>
-              This link never expires and can be used by anyone. You can deactivate it anytime from group settings.
-            </small>
-          </Alert>
         </Modal.Body>
-        <Modal.Footer style={{ backgroundColor: colors.bg.card, borderTop: `1px solid ${colors.border.primary}` }}>
-          <Button variant="secondary" onClick={() => setShowShareModal(false)}>
-            Close
-          </Button>
-        </Modal.Footer>
       </Modal>
 
       <BottomNavigation />

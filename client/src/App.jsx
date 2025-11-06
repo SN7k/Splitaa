@@ -22,6 +22,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/sso-callback" element={<SSOCallback />} />
         <Route path="/join/:token" element={<JoinGroup />} />
+        <Route path="/invite/:token" element={<JoinGroup />} />
         
         {/* Protected Routes */}
         <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />

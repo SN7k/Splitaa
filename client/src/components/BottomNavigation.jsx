@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { Container, Button, Card } from 'react-bootstrap'
 import { navigationItems, isActivePath } from '../config/navigation'
 import CreateGroupModal from './CreateGroupModal'
+import QRScanner from './QRScanner'
 import { useTheme } from '../contexts/ThemeContext'
 import { useState } from 'react'
 
@@ -132,6 +133,7 @@ function BottomNavigation() {
   const { colors } = useTheme()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showGroupModal, setShowGroupModal] = useState(false)
+  const [showQRScanner, setShowQRScanner] = useState(false)
 
   const handleCreateEvent = () => {
     setShowCreateModal(false)
@@ -140,7 +142,7 @@ function BottomNavigation() {
 
   const handleJoinQR = () => {
     setShowCreateModal(false)
-    alert('QR Scanner feature coming soon! You can manually join groups for now.')
+    setShowQRScanner(true)
   }
 
   const handleOverlayClick = () => {
@@ -313,6 +315,10 @@ function BottomNavigation() {
         show={showGroupModal} 
         onHide={() => setShowGroupModal(false)} 
       />
+
+      {showQRScanner && (
+        <QRScanner onClose={() => setShowQRScanner(false)} />
+      )}
     </>
   )
 }
