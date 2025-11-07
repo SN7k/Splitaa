@@ -53,12 +53,18 @@ export function ClerkUserSync() {
             localStorage.setItem('current_user', JSON.stringify(result.data.user))
             localStorage.setItem('clerk_user', JSON.stringify(user))
             localStorage.setItem('auth_token', result.data.token)
+            
+            // Dispatch custom event to notify other components
+            window.dispatchEvent(new Event('auth-changed'))
           } else {
             console.warn('⚠️ Backend sync failed, using fallback')
             
             localStorage.setItem('current_user', JSON.stringify(userData))
             localStorage.setItem('clerk_user', JSON.stringify(user))
             localStorage.setItem('auth_token', `clerk_${user.id}`)
+            
+            // Dispatch custom event to notify other components
+            window.dispatchEvent(new Event('auth-changed'))
           }
         } catch (error) {
           console.error('❌ Error syncing user:', error)
@@ -72,6 +78,9 @@ export function ClerkUserSync() {
           localStorage.setItem('current_user', JSON.stringify(userData))
           localStorage.setItem('clerk_user', JSON.stringify(user))
           localStorage.setItem('auth_token', `clerk_${user.id}`)
+          
+          // Dispatch custom event to notify other components
+          window.dispatchEvent(new Event('auth-changed'))
         }
       } else if (isLoaded && !isSignedIn) {
         // User is not signed in, clear local storage

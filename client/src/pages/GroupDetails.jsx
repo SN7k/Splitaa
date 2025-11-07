@@ -59,12 +59,21 @@ function GroupDetails() {
   const [expenseError, setExpenseError] = useState('')
 
   useEffect(() => {
-    if (groupIdFromUrl) {
+    // Wait for currentUser to be available before loading group data
+    if (groupIdFromUrl && currentUser) {
       loadGroupData()
-    } else {
+    } else if (groupIdFromUrl && !currentUser) {
+      // If no currentUser yet, set a small timeout to wait for context to load
+      const timer = setTimeout(() => {
+        if (currentUser) {
+          loadGroupData()
+        }
+      }, 500)
+      return () => clearTimeout(timer)
+    } else if (!groupIdFromUrl) {
       navigate('/groups')
     }
-  }, [groupIdFromUrl])
+  }, [groupIdFromUrl, currentUser])
 
   const loadGroupData = async () => {
     try {
@@ -85,7 +94,7 @@ function GroupDetails() {
       setGroupMembers(membersList)
       setGroupExpenses(expensesList)
       
-      if (membersList && membersList.length > 0) {
+      if (membersList && membersList.length > 0 && currentUser) {
         const currentMember = membersList.find(m => m.email === currentUser.email)
         if (currentMember) {
           setExpenseForm(prev => ({ ...prev, paidBy: currentMember.user_id || currentMember.id }))
@@ -149,7 +158,7 @@ function GroupDetails() {
       })
     } else {
       setEditingExpense(null)
-      const currentMember = groupMembers.find(m => m.email === currentUser.email)
+      const currentMember = currentUser ? groupMembers.find(m => m.email === currentUser.email) : null
       
       // Initialize customSplits with equal distribution
       const customSplits = {}
@@ -513,32 +522,7 @@ function GroupDetails() {
     return currentMember?.role === 'admin'
   }
 
-  if (loading) {
-    return (
-      <div style={{ minHeight: '100vh', backgroundColor: colors.bg.primary }}>
-        <DesktopNavbar />
-        <Container style={{ paddingTop: '3rem', textAlign: 'center' }}>
-          <div style={{ color: colors.text.primary }}>Loading group data...</div>
-        </Container>
-        <BottomNavigation />
-      </div>
-    )
-  }
-
-  if (!selectedGroup) {
-    return (
-      <div style={{ minHeight: '100vh', backgroundColor: colors.bg.primary }}>
-        <DesktopNavbar />
-        <Container style={{ paddingTop: '3rem', textAlign: 'center' }}>
-          <h4 style={{ color: colors.text.primary }}>Group not found</h4>
-          <Button onClick={() => navigate('/groups')} className="mt-3">Go to Groups</Button>
-        </Container>
-        <BottomNavigation />
-      </div>
-    )
-  }
-
-  const memberBalances = calculateMemberBalances()
+  const memberBalances = selectedGroup ? calculateMemberBalances() : []
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: colors.bg.primary }}>
@@ -589,7 +573,16 @@ function GroupDetails() {
             marginBottom: 0,
             zIndex: 1
           }}>
-            {selectedGroup.name}
+            {loading ? (
+              <span style={{ opacity: 0.6 }}>
+                <i className="bi bi-hourglass-split me-2"></i>
+                Loading...
+              </span>
+            ) : selectedGroup ? (
+              selectedGroup.name
+            ) : (
+              'Group not found'
+            )}
           </h2>
         </div>
 
@@ -605,10 +598,12 @@ function GroupDetails() {
               onClick={() => setActiveTab('expenses')}
               style={{
                 color: activeTab === 'expenses' ? '#F97316' : colors.text.secondary,
+                borderLeft: 'none',
+                borderRight: 'none',
+                borderTop: 'none',
                 borderBottom: activeTab === 'expenses' ? '3px solid #F97316' : 'none',
                 fontWeight: activeTab === 'expenses' ? '600' : '400',
                 backgroundColor: 'transparent',
-                border: 'none',
                 padding: '1rem 1.5rem'
               }}
             >
@@ -622,10 +617,12 @@ function GroupDetails() {
               onClick={() => setActiveTab('members')}
               style={{
                 color: activeTab === 'members' ? '#F97316' : colors.text.secondary,
+                borderLeft: 'none',
+                borderRight: 'none',
+                borderTop: 'none',
                 borderBottom: activeTab === 'members' ? '3px solid #F97316' : 'none',
                 fontWeight: activeTab === 'members' ? '600' : '400',
                 backgroundColor: 'transparent',
-                border: 'none',
                 padding: '1rem 1.5rem'
               }}
             >
@@ -637,8 +634,29 @@ function GroupDetails() {
 
         {/* Tab Content */}
         <div style={{ padding: '1.5rem' }}>
+          {/* Show loading message if still loading */}
+          {loading && (
+            <div style={{ textAlign: 'center', padding: '2rem', color: colors.text.secondary }}>
+              <div className="spinner-border text-primary mb-2" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p>Loading group data...</p>
+            </div>
+          )}
+
+          {/* Show not found message if not loading and no group */}
+          {!loading && !selectedGroup && (
+            <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+              <i className="bi bi-exclamation-triangle" style={{ fontSize: '4rem', color: colors.text.secondary, marginBottom: '1rem', display: 'block' }}></i>
+              <h4 style={{ color: colors.text.primary }}>Group not found</h4>
+              <Button onClick={() => navigate('/groups')} className="mt-3" style={{ backgroundColor: '#22C55E', border: 'none' }}>
+                Go to Groups
+              </Button>
+            </div>
+          )}
+
           {/* EXPENSES TAB */}
-          {activeTab === 'expenses' && (
+          {!loading && selectedGroup && activeTab === 'expenses' && (
             <div>
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 style={{ color: colors.text.primary, marginBottom: 0, fontWeight: '600' }}>
@@ -740,7 +758,7 @@ function GroupDetails() {
           )}
 
           {/* MEMBERS TAB */}
-          {activeTab === 'members' && (
+          {!loading && selectedGroup && activeTab === 'members' && (
             <div>
               <p style={{ color: colors.text.secondary, marginBottom: '1.5rem', fontSize: '0.9rem' }}>
                 Total: {groupMembers.length} {groupMembers.length === 1 ? 'member' : 'members'}
@@ -1155,7 +1173,7 @@ function GroupDetails() {
                   const memberId = member.user_id || member.id
                   return (
                     <option key={memberId} value={memberId}>
-                      {member.name} {member.email === currentUser.email ? '(You)' : ''}
+                      {member.name} {currentUser && member.email === currentUser.email ? '(You)' : ''}
                     </option>
                   )
                 })}
@@ -1308,7 +1326,7 @@ function GroupDetails() {
                             </div>
                             <div className="flex-grow-1" style={{ fontSize: '0.9rem', color: colors.text.primary, fontWeight: '500' }}>
                               {member.name}
-                              {member.email === currentUser.email && (
+                              {currentUser && member.email === currentUser.email && (
                                 <Badge bg="warning" className="ms-2" style={{ fontSize: '0.65rem' }}>You</Badge>
                               )}
                             </div>

@@ -175,9 +175,9 @@ function Account() {
         break
       case 'payments':
         break
-      case 'privacy':
-        break
-      case 'help':
+      case 'about':
+        // Show about modal or navigate to about page
+        alert('SplitPay - Version 1.0.0\n\nA simple and efficient expense splitting app for groups.')
         break
       default:
         break
@@ -433,45 +433,22 @@ function Account() {
         }}>
           <div 
             style={{
-              ...styles.settingItem,
-              borderBottomColor: colors.border.secondary
-            }}
-            onClick={() => handleSettingClick('privacy')}
-            onMouseEnter={(e) => e.target.style.backgroundColor = colors.bg.tertiary}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-          >
-            <i className="bi bi-shield-check" style={{
-              ...styles.settingIcon,
-              color: colors.text.secondary
-            }}></i>
-            <p style={{
-              ...styles.settingText,
-              color: colors.text.primary
-            }}>Privacy & Security</p>
-            <i className="bi bi-chevron-right" style={{
-              ...styles.settingArrow,
-              color: colors.text.secondary
-            }}></i>
-          </div>
-          
-          <div 
-            style={{
               ...styles.settingItem, 
               ...styles.settingItemLast,
               borderBottomColor: colors.border.secondary
             }}
-            onClick={() => handleSettingClick('help')}
+            onClick={() => handleSettingClick('about')}
             onMouseEnter={(e) => e.target.style.backgroundColor = colors.bg.tertiary}
             onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
           >
-            <i className="bi bi-question-circle" style={{
+            <i className="bi bi-info-circle" style={{
               ...styles.settingIcon,
               color: colors.text.secondary
             }}></i>
             <p style={{
               ...styles.settingText,
               color: colors.text.primary
-            }}>Help & Support</p>
+            }}>About</p>
             <i className="bi bi-chevron-right" style={{
               ...styles.settingArrow,
               color: colors.text.secondary

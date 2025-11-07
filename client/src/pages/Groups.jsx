@@ -119,8 +119,8 @@ function Groups() {
   const isMobile = window.innerWidth < 768
   const navigate = useNavigate()
   const { colors } = useTheme()
-  const { state } = useExpenses()
-  const { groups, currentUser } = state
+  const { state, refreshData } = useExpenses()
+  const { groups, currentUser, loading } = state
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -131,6 +131,11 @@ function Groups() {
       setSearchParams(searchParams)
     }
   }, [searchParams, setSearchParams])
+
+  // Refresh data when component mounts
+  useEffect(() => {
+    refreshData()
+  }, [])
 
   // Check if current user is admin of a specific group
   const isUserAdminOfGroup = (group) => {
@@ -235,7 +240,14 @@ function Groups() {
           <i className="bi bi-plus-lg me-2"></i>Create New Group
         </Button>
 
-        {groups.length > 0 ? (
+        {loading ? (
+          <div style={styles.emptyState}>
+            <div className="spinner-border text-success" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p style={{ color: colors.text.secondary, marginTop: '1rem' }}>Loading your groups...</p>
+          </div>
+        ) : groups.length > 0 ? (
           <div>
             {groups.map(group => {
               const userBalance = getUserBalanceInGroup(group.id)

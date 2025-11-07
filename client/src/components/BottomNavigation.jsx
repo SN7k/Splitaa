@@ -159,9 +159,8 @@ function BottomNavigation() {
         <Container>
           <div className="d-flex justify-content-around align-items-center py-2">
             {navigationItems.map((navItem, index) => (
-              <>
+              <div key={navItem.id} style={{ display: 'contents' }}>
                 <Button 
-                  key={navItem.id}
                   variant="link" 
                   style={{
                     ...styles.bottomNavItem, 
@@ -218,7 +217,7 @@ function BottomNavigation() {
                     </Button>
                   </>
                 )}
-              </>
+              </div>
             ))}
           </div>
         </Container>

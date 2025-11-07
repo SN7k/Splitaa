@@ -135,33 +135,33 @@ function expensesReducer(state, action) {
 export const ExpensesProvider = ({ children }) => {
   const [state, dispatch] = useReducer(expensesReducer, initialState);
 
-  useEffect(() => {
-    const loadData = async () => {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      try {
-        const token = localStorage.getItem('auth_token');
-        if (!token) {
-          dispatch({ type: 'SET_LOADING', payload: false });
-          return;
-        }
-
-
-        const [currentUser, groups, expenses, settlements] = await Promise.all([
-          getCurrentUser().catch(err => { return null; }),
-          getGroups().catch(err => { return []; }),
-          getAllExpenses().catch(err => { return []; }),
-          getSettlements().catch(err => { return []; })
-        ]);
-        
-        dispatch({
-          type: 'SET_ALL_DATA',
-          payload: { currentUser, friends: [], groups, expenses, settlements }
-        });
-      } catch (error) {
-        dispatch({ type: 'SET_ERROR', payload: error.message });
+  const loadData = async () => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return;
       }
-    };
-    
+
+
+      const [currentUser, groups, expenses, settlements] = await Promise.all([
+        getCurrentUser().catch(err => { return null; }),
+        getGroups().catch(err => { return []; }),
+        getAllExpenses().catch(err => { return []; }),
+        getSettlements().catch(err => { return []; })
+      ]);
+      
+      dispatch({
+        type: 'SET_ALL_DATA',
+        payload: { currentUser, friends: [], groups, expenses, settlements }
+      });
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: error.message });
+    }
+  };
+
+  useEffect(() => {
     loadData();
 
     const handleStorageChange = (e) => {
@@ -170,15 +170,22 @@ export const ExpensesProvider = ({ children }) => {
       }
     };
 
+    // Listen for auth token changes
+    const handleAuthChange = () => {
+      loadData();
+    };
+
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('auth-changed', handleAuthChange);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-changed', handleAuthChange);
     };
   }, []);
 
   return (
-    <ExpensesContext.Provider value={{ state, dispatch }}>
+    <ExpensesContext.Provider value={{ state, dispatch, refreshData: loadData }}>
       {children}
     </ExpensesContext.Provider>
   );
