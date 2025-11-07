@@ -1,34 +1,48 @@
 <?php
 // Database configuration
-// Check environment
-$isProduction = isset($_SERVER['GAE_APPLICATION']) || getenv('DB_HOST');
-$isInfinityFree = !$isProduction && isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'infinityfreeapp.com') !== false;
 
-if ($isInfinityFree) {
-    // InfinityFree hosting
-    define('DB_HOST', 'sql100.infinityfree.com');
-    define('DB_PORT', '3306');
-    define('DB_NAME', 'if0_40328792_splitaa');
-    define('DB_USER', 'if0_40328792');
-    define('DB_PASS', 'lSrNqg58Ij37');
-    define('JWT_SECRET', 'change-this-secret-key-in-production-12345');
-} elseif ($isProduction) {
-    // Production (Render with Aiven MySQL)
-    define('DB_HOST', getenv('DB_HOST') ?: '/cloudsql/splitaa:asia-south1:splitaa-db');
-    define('DB_PORT', getenv('DB_PORT') ?: '3306');
-    define('DB_NAME', getenv('DB_NAME') ?: 'splitaa_database');
-    define('DB_USER', getenv('DB_USER') ?: 'root');
-    define('DB_PASS', getenv('DB_PASS') ?: '');
-    define('JWT_SECRET', getenv('JWT_SECRET') ?: 'change-this-secret-key');
-} else {
-    // Local development
-    define('DB_HOST', 'localhost');
-    define('DB_PORT', '3306');
-    define('DB_NAME', 'expense_splitter');
-    define('DB_USER', 'root');
-    define('DB_PASS', '');
-    define('JWT_SECRET', 'your-secret-key-change-this-in-production');
+// Load environment variables from .env file if it exists
+function loadEnv($path) {
+    if (!file_exists($path)) {
+        return;
+    }
+    
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        // Skip comments
+        if (strpos(trim($line), '#') === 0) {
+            continue;
+        }
+        
+        // Parse KEY=VALUE
+        if (strpos($line, '=') !== false) {
+            list($key, $value) = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            
+            // Remove quotes if present
+            $value = trim($value, '"\'');
+            
+            // Set as environment variable if not already set
+            if (!getenv($key)) {
+                putenv("$key=$value");
+                $_ENV[$key] = $value;
+                $_SERVER[$key] = $value;
+            }
+        }
+    }
 }
+
+// Load .env file from the server root
+loadEnv(__DIR__ . '/../.env');
+
+// Get database configuration from environment variables
+define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+define('DB_PORT', getenv('DB_PORT') ?: '3306');
+define('DB_NAME', getenv('DB_NAME') ?: 'snk007_splitaa_db');
+define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_PASS', getenv('DB_PASS') ?: '');
+define('JWT_SECRET', getenv('JWT_SECRET') ?: 'your-secret-key-change-this-in-production');
 
 define('DB_CHARSET', 'utf8mb4');
 define('JWT_EXPIRY', 86400); // 24 hours
