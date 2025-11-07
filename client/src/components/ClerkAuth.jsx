@@ -1,8 +1,8 @@
 import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn, useUser } from '@clerk/clerk-react'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '')
 
 export function ClerkAuthProvider({ children }) {
   if (!clerkPubKey) {
@@ -19,13 +19,21 @@ export function ClerkAuthProvider({ children }) {
 
 export function ClerkUserSync() {
   const { user, isLoaded, isSignedIn } = useUser()
+  const hasSynced = useRef(false)
 
   useEffect(() => {
-    if (isLoaded && isSignedIn && user) {
-      const syncUser = async () => {
+    const syncUser = async () => {
+      // Prevent multiple sync attempts
+      if (hasSynced.current) {
+        return
+      }
+
+      if (isLoaded && isSignedIn && user) {
+        hasSynced.current = true
+        
         try {
           const userData = {
-            name: user.fullName || `${user.firstName} ${user.lastName}` || 'User',
+            name: user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
             email: user.primaryEmailAddress?.emailAddress,
             clerkId: user.id,
             avatar: user.imageUrl
@@ -46,17 +54,17 @@ export function ClerkUserSync() {
             localStorage.setItem('clerk_user', JSON.stringify(user))
             localStorage.setItem('auth_token', result.data.token)
           } else {
-            console.error('❌ Failed to sync with backend:', result.message)
+            console.warn('⚠️ Backend sync failed, using fallback')
             
             localStorage.setItem('current_user', JSON.stringify(userData))
             localStorage.setItem('clerk_user', JSON.stringify(user))
             localStorage.setItem('auth_token', `clerk_${user.id}`)
           }
         } catch (error) {
-          console.error('❌ Error syncing Clerk user with backend:', error)
+          console.error('❌ Error syncing user:', error)
           
           const userData = {
-            name: user.fullName || `${user.firstName} ${user.lastName}` || 'User',
+            name: user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
             email: user.primaryEmailAddress?.emailAddress,
             clerkId: user.id,
             avatar: user.imageUrl
@@ -65,10 +73,16 @@ export function ClerkUserSync() {
           localStorage.setItem('clerk_user', JSON.stringify(user))
           localStorage.setItem('auth_token', `clerk_${user.id}`)
         }
+      } else if (isLoaded && !isSignedIn) {
+        // User is not signed in, clear local storage
+        localStorage.removeItem('current_user')
+        localStorage.removeItem('clerk_user')
+        localStorage.removeItem('auth_token')
+        hasSynced.current = false
       }
-
-      syncUser()
     }
+
+    syncUser()
   }, [user, isLoaded, isSignedIn])
 
   return null

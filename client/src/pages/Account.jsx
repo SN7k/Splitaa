@@ -186,17 +186,28 @@ function Account() {
 
   const handleLogout = async () => {
     try {
+      console.log('🚪 Logging out...')
+      
+      // Clear all local storage
       localStorage.removeItem('auth_token')
       localStorage.removeItem('current_user')
       localStorage.removeItem('clerk_user')
       
-      if (clerkUser) {
-        await signOut()
-      }
+      // Clear session storage
+      sessionStorage.clear()
       
-      navigate('/login', { replace: true })
+      // Sign out from Clerk if applicable
+      if (clerkUser) {
+        console.log('🔄 Signing out from Clerk...')
+        await signOut({ redirectUrl: '/login' })
+      } else {
+        // If not using Clerk, navigate manually
+        console.log('✅ Logout complete, redirecting...')
+        navigate('/login', { replace: true })
+      }
     } catch (error) {
       console.error('❌ Logout error:', error)
+      // Force navigation even if there's an error
       navigate('/login', { replace: true })
     }
   }

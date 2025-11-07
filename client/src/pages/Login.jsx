@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap'
 import { useTheme } from '../contexts/ThemeContext'
 import { loginUser } from '../services/api'
@@ -13,22 +13,48 @@ function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const hasCheckedAuth = useRef(false)
   const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
-    if (userLoaded && isSignedIn && user) {
-      sessionStorage.removeItem('redirectAfterLogin')
-      navigate('/home', { replace: true })
+    // Only check once and only when Clerk is loaded
+    if (hasCheckedAuth.current || !userLoaded) {
       return
     }
 
-    const token = localStorage.getItem('auth_token')
-    const currentUser = localStorage.getItem('current_user')
-    
-    if (token && currentUser) {
-      sessionStorage.removeItem('redirectAfterLogin')
-      navigate('/home', { replace: true })
+    const checkAuthentication = () => {
+      hasCheckedAuth.current = true
+      
+      // Check Clerk authentication
+      if (isSignedIn && user) {
+        sessionStorage.removeItem('redirectAfterLogin')
+        navigate('/home', { replace: true })
+        return
+      }
+
+      // Check local authentication
+      const token = localStorage.getItem('auth_token')
+      const currentUser = localStorage.getItem('current_user')
+      
+      if (token && currentUser) {
+        try {
+          JSON.parse(currentUser) // Validate JSON
+          sessionStorage.removeItem('redirectAfterLogin')
+          navigate('/home', { replace: true })
+          return
+        } catch (e) {
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('current_user')
+        }
+      }
+      
+      // Done checking, show login form
+      setIsCheckingAuth(false)
     }
+
+    checkAuthentication()
   }, [userLoaded, isSignedIn, user, navigate])
 
   const handleSubmit = async (e) => {
@@ -39,8 +65,11 @@ function Login() {
     try {
       await loginUser(email, password)
       sessionStorage.removeItem('redirectAfterLogin')
-      navigate('/home')
-      window.location.reload()
+      
+      // Small delay to ensure localStorage is written
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      navigate('/home', { replace: true })
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.')
     } finally {
@@ -57,28 +86,52 @@ function Login() {
 
   const handleGoogleLogin = async () => {
     if (!clerkLoaded || !signIn) {
-      alert('Clerk is not configured. Please add VITE_CLERK_PUBLISHABLE_KEY to your .env file')
+      setError('Google Sign-In is not available. Please try email/password login.')
       return
     }
 
     try {
       setLoading(true)
+      setError('')
       
+      // Check if already signed in
       if (isSignedIn && user) {
         navigate('/home', { replace: true })
         return
       }
       
+      console.log('🔄 Starting Google OAuth flow...')
+      
+      // Clear any stale auth data before starting OAuth
+      sessionStorage.removeItem('redirectAfterLogin')
+      
+      // Use sso-callback for proper handling
       await signIn.authenticateWithRedirect({
         strategy: 'oauth_google',
         redirectUrl: '/sso-callback',
-        redirectUrlComplete: '/home'
+        redirectUrlComplete: '/sso-callback'
       })
     } catch (err) {
       console.error('Google login error:', err)
       setError('Google login failed. Please try again.')
       setLoading(false)
     }
+  }
+
+  // Show loading state while checking auth
+  if (isCheckingAuth) {
+    return (
+      <div className="login-page" style={{ backgroundColor: colors.bg.primary }}>
+        <Container fluid className="vh-100 d-flex align-items-center justify-content-center">
+          <div className="text-center">
+            <div className="spinner-border text-success" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-3" style={{ color: colors.text.secondary }}>Checking authentication...</p>
+          </div>
+        </Container>
+      </div>
+    )
   }
 
   return (

@@ -1,10 +1,10 @@
 ﻿/**
  * API Service Layer - Connected to PHP Backend
- * All API calls connect to the real backend running on http://localhost:8000
+ * All API calls connect to the backend
  */
 
-// API Configuration
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// API Configuration - Remove trailing slash to prevent double slashes
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '');
 
 // Helper function to get auth token
 const getAuthToken = () => {
