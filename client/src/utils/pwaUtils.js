@@ -5,7 +5,7 @@ export function registerServiceWorker() {
       navigator.serviceWorker
         .register('/service-worker.js')
         .then((registration) => {
-          console.log('✅ Service Worker registered successfully:', registration.scope);
+          // Service Worker registered successfully
           
           // Check for updates every hour
           setInterval(() => {
@@ -17,10 +17,7 @@ export function registerServiceWorker() {
             const newWorker = registration.installing;
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New update available
-                console.log('🔄 New update available! Refresh to get the latest version.');
-                
-                // You can show a toast/notification to the user here
+                // New update available - show update prompt
                 if (confirm('New version available! Reload to update?')) {
                   window.location.reload();
                 }
@@ -29,7 +26,7 @@ export function registerServiceWorker() {
           });
         })
         .catch((error) => {
-          console.error('❌ Service Worker registration failed:', error);
+          // Service Worker registration failed silently
         });
     });
   }
@@ -39,13 +36,7 @@ export function registerServiceWorker() {
 export async function requestNotificationPermission() {
   if ('Notification' in window && 'serviceWorker' in navigator) {
     const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      console.log('✅ Notification permission granted');
-      return true;
-    } else {
-      console.log('❌ Notification permission denied');
-      return false;
-    }
+    return permission === 'granted';
   }
   return false;
 }
@@ -59,14 +50,13 @@ export function setupInstallPrompt() {
     e.preventDefault();
     // Stash the event so it can be triggered later
     deferredPrompt = e;
-    console.log('💾 Install prompt available');
     
-    // You can show your custom install button here
+    // Show custom install prompt
     showInstallButton();
   });
 
   window.addEventListener('appinstalled', () => {
-    console.log('✅ PWA installed successfully');
+    // PWA installed successfully
     deferredPrompt = null;
   });
 }
@@ -134,6 +124,10 @@ function showInstallButton() {
     opacity: 0;
     transition: all 0.3s ease-out;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+    will-change: transform, opacity;
+    -webkit-transform: translateX(-50%) translateY(-100px);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   `;
   
   document.body.appendChild(popup);
@@ -153,7 +147,6 @@ function showInstallButton() {
     
     // Wait for the user to respond to the prompt
     const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to install prompt: ${outcome}`);
     
     // Clear the prompt
     deferredPrompt = null;

@@ -100,8 +100,6 @@ function Login() {
         return
       }
       
-      console.log('🔄 Starting Google OAuth flow...')
-      
       // Clear any stale auth data before starting OAuth
       sessionStorage.removeItem('redirectAfterLogin')
       
