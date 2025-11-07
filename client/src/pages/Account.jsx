@@ -177,7 +177,7 @@ function Account() {
         break
       case 'about':
         // Show about modal or navigate to about page
-        alert('SplitPay - Version 1.0.0\n\nA simple and efficient expense splitting app for groups.')
+        alert('Splitaa - Split Expenses with Friends.')
         break
       default:
         break
