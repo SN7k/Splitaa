@@ -1,0 +1,159 @@
+<div class="dashboard-layout">
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <h1>Dashboard Overview</h1>
+            <div class="header-actions">
+                <div class="notification-container">
+                    <button class="notification-btn" (click)="toggleNotifications()">
+                        <span>🔔</span>
+                        <span 
+                            class="badge" 
+                            *ngIf="unreadCount$ | async as count" 
+                            [class.has-unread]="count > 0">
+                            {{ count }}
+                        </span>
+                    </button>
+                </div>
+                <button class="logout-btn" (click)="logout()">
+                    <span>Logout</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Notification Panel -->
+        <app-notification-panel></app-notification-panel>
+
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card stat-card-blue">
+                <div class="stat-details">
+                    <h3>Total Users</h3>
+                    <p class="stat-number">{{ totalUsers }}</p>
+                    <small class="stat-change positive">
+                        <span>Active: {{ activeUsers }}</span> | 
+                        <span>Inactive: {{ inactiveUsers }}</span>
+                    </small>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-green">
+                <div class="stat-details">
+                    <h3>Groups</h3>
+                    <p class="stat-number">{{ totalGroups }}</p>
+                    <small class="stat-change positive">+15% from last month</small>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-orange">
+                <div class="stat-details">
+                    <h3>Total Expenses</h3>
+                    <p class="stat-number">{{ totalExpenses }}</p>
+                    <small class="stat-change positive">+23% from last week</small>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-purple">
+                <div class="stat-details">
+                    <h3>Settlements</h3>
+                    <p class="stat-number">{{ settlements }}</p>
+                    <small class="stat-change">Pending settlements</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-grid">
+            <!-- Gender Ratio Pie Chart -->
+            <div class="chart-card">
+                <h3>Male/Female Ratio</h3>
+                <div class="chart-container">
+                    <svg viewBox="0 0 200 200" class="pie-chart">
+            <circle
+              class="pie-segment male-users"
+              cx="100"
+              cy="100"
+              r="80"
+              stroke="#4F86F7"
+              stroke-width="40"
+              fill="none"
+              [attr.stroke-dasharray]="getGenderPieSegment(0)"
+              [attr.stroke-dashoffset]="getGenderPieOffset(0)"
+            ></circle>
+            <circle
+              class="pie-segment female-users"
+              cx="100"
+              cy="100"
+              r="80"
+              stroke="#EC4899"
+              stroke-width="40"
+              fill="none"
+              [attr.stroke-dasharray]="getGenderPieSegment(1)"
+              [attr.stroke-dashoffset]="getGenderPieOffset(1)"
+            ></circle>
+          </svg>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <span class="legend-color male-users"></span>
+                            <span>Male ({{ maleUsers }})</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color female-users"></span>
+                            <span>Female ({{ femaleUsers }})</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expense Breakdown Bar Chart -->
+            <div class="chart-card">
+                <h3>Expense Breakdown (Last 7 Days)</h3>
+                <div class="chart-container">
+                    <div class="bar-chart">
+                        <div class="bar-item">
+                            <div class="bar-fill" [style.height.%]="getBarHeight(120)"></div>
+                            <span class="bar-label">$120</span>
+                            <span class="bar-day">Mon</span>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-fill" [style.height.%]="getBarHeight(250)"></div>
+                            <span class="bar-label">$250</span>
+                            <span class="bar-day">Tue</span>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-fill" [style.height.%]="getBarHeight(180)"></div>
+                            <span class="bar-label">$180</span>
+                            <span class="bar-day">Wed</span>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-fill" [style.height.%]="getBarHeight(300)"></div>
+                            <span class="bar-label">$300</span>
+                            <span class="bar-day">Thu</span>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-fill" [style.height.%]="getBarHeight(220)"></div>
+                            <span class="bar-label">$220</span>
+                            <span class="bar-day">Fri</span>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-fill" [style.height.%]="getBarHeight(150)"></div>
+                            <span class="bar-label">$150</span>
+                            <span class="bar-day">Sat</span>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-fill" [style.height.%]="getBarHeight(90)"></div>
+                            <span class="bar-label">$90</span>
+                            <span class="bar-day">Sun</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="dashboard-footer">
+            <p>&copy; 2025 Splitaa Admin. All rights reserved.</p>
+        </footer>
+    </div>
+</div>

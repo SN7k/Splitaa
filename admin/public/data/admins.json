@@ -1,0 +1,31 @@
+[{
+        "id": 1,
+        "email": "rahulpaul@gmail.com",
+        "password": "12345",
+        "name": "Admin User",
+        "role": "super_admin",
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "lastLogin": null,
+        "isActive": true
+    },
+    {
+        "id": 2,
+        "email": "shombhu@gmail.com",
+        "password": "12345",
+        "name": "Manager User",
+        "role": "manager",
+        "createdAt": "2024-01-15T00:00:00.000Z",
+        "lastLogin": null,
+        "isActive": true
+    },
+    {
+        "id": 3,
+        "email": "saptarshi@gmail.com",
+        "password": "12345",
+        "name": "Support User",
+        "role": "support",
+        "createdAt": "2024-02-01T00:00:00.000Z",
+        "lastLogin": null,
+        "isActive": true
+    }
+]
