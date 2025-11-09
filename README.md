@@ -11,6 +11,10 @@
 
 Splitaa is a comprehensive expense splitting platform designed to help groups manage shared expenses efficiently. Whether it's a trip with friends, shared household bills, or group dining, Splitaa makes it simple to track who paid what and who owes whom.
 
+<p align="center">
+    <img width="1080" height="1080" alt="Image" src="https://github.com/user-attachments/assets/c08fffc4-192d-48d2-b333-96a702a197b7" />
+</p>
+
 ### ✨ Key Features
 
 - 🔐 **Secure Authentication** - Email/password and Google OAuth via Clerk
