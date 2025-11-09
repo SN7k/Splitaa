@@ -15,4 +15,4 @@
 
 # Build environment settings
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20.19.0"
