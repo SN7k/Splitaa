@@ -1,0 +1,18 @@
+# Netlify configuration for Angular Admin Panel
+
+[build]
+  # Build command
+  command = "npm run build"
+  
+  # Output directory (Angular outputs to dist/admin/browser by default)
+  publish = "dist/admin/browser"
+
+# Redirect all routes to index.html for Angular routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Build environment settings
+[build.environment]
+  NODE_VERSION = "18"
